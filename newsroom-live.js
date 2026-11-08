@@ -18,11 +18,31 @@
  async function desk(){
   const grid=document.querySelector("[data-live-desk]");if(!grid)return;
   const p=new URLSearchParams(location.search),section=(p.get("section")||"latest").toLowerCase(),q=(p.get("search")||"").trim();
+  const page=Math.max(1,parseInt(p.get("page")||"1",10)||1),pageSize=20;
   const heading=document.querySelector("#deskTitle");if(heading)heading.textContent=q?"Search: "+q:section==="latest"?"Latest reports":section[0].toUpperCase()+section.slice(1);
-  let query=db.from("articles").select("id,title,slug,category,summary,featured_image_url,published_at,byline_name").eq("status","published").order("published_at",{ascending:false}).limit(40);
-  if(section!=="latest"&&!q)query=query.ilike("category",section);if(q)query=query.or("title.ilike.%"+q+"%,summary.ilike.%"+q+"%,body.ilike.%"+q+"%");
-  const {data,error}=await query;if(error){grid.textContent="The newsroom feed is temporarily unavailable.";return;}
-  grid.innerHTML=data?.length?data.map(card).join(""):'<div class="desk-empty"><div class="empty-mark">W</div><h2>No published reports in this desk yet.</h2><p>Drafts remain private until editorial approval.</p></div>';
+  let query=db.from("articles").select("id,title,slug,category,summary,featured_image_url,published_at,byline_name",{count:"exact"}).eq("status","published").order("published_at",{ascending:false});
+  if(section!=="latest"&&!q)query=query.ilike("category",section);
+  if(q)query=query.or("title.ilike.%"+q+"%,summary.ilike.%"+q+"%,body.ilike.%"+q+"%");
+  const from=(page-1)*pageSize;query=query.range(from,from+pageSize-1);
+  const {data,error,count}=await query;
+  if(error){grid.textContent="The newsroom feed is temporarily unavailable.";return;}
+  const totalPages=Math.max(1,Math.ceil((count||0)/pageSize));
+  const articles=data||[];
+  const archive=document.createElement("div");archive.className="archive-tools";
+  archive.innerHTML='<div class="archive-meta"><span>NEWS ARCHIVE</span><b>'+((count||0).toLocaleString())+' published reports</b><small>Browse the full archive, newest first.</small></div><label>Year <select id="archiveYear"><option value="">All years</option></select></label>';
+  const yearSelect=archive.querySelector("#archiveYear");
+  const {data:years}=await db.from("articles").select("published_at").eq("status","published").order("published_at",{ascending:false}).limit(1000);
+  const yearList=[...new Set((years||[]).map(a=>new Date(a.published_at).getFullYear()).filter(Number.isFinite))].sort((a,b)=>b-a);
+  yearList.forEach(y=>{const o=document.createElement("option");o.value=String(y);o.textContent=String(y);yearSelect.append(o)});
+  if(p.get("year"))yearSelect.value=p.get("year");
+  yearSelect.onchange=()=>{const next=new URLSearchParams(location.search);next.delete("page");if(yearSelect.value)next.set("year",yearSelect.value);else next.delete("year");location.search=next.toString()};
+  let shown=articles;
+  if(p.get("year"))shown=shown.filter(a=>String(new Date(a.published_at).getFullYear())===p.get("year"));
+  const cards=document.createElement("div");cards.className="live-story-grid";cards.innerHTML=shown.length?shown.map(card).join(""):'<div class="desk-empty"><div class="empty-mark">W</div><h2>No published reports in this view.</h2><p>Try another section or year. Drafts remain private until editorial approval.</p></div>';
+  const pager=document.createElement("nav");pager.className="archive-pagination";pager.setAttribute("aria-label","News archive pages");
+  pager.innerHTML='<span>Page '+page+' of '+totalPages+'</span><div>'+(page>1?'<a href="'+esc(pageUrl(page-1))+'">← Newer</a>':'')+(page<totalPages?'<a href="'+esc(pageUrl(page+1))+'">Older →</a>':'')+'</div>';
+  function pageUrl(n){const next=new URLSearchParams(location.search);next.set("page",String(n));return "desk.html?"+next.toString()}
+  grid.replaceChildren(archive,cards,pager);
  }
  async function story(){
   const root=document.querySelector("[data-live-story]");if(!root)return;
