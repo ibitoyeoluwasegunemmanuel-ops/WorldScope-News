@@ -57,9 +57,15 @@
   const today=new Date().toISOString().slice(0,10);
   const {data}=await db.from("ad_campaigns").select("name,advertiser,placement,click_url,asset_url,media_type").eq("status","active").or("starts_at.is.null,starts_at.lte."+today).or("ends_at.is.null,ends_at.gte."+today).order("created_at",{ascending:false}).limit(8);
   if(!data?.length)return;
-  const sidebar=data.find(a=>a.placement==="sidebar")||data[0],box=document.querySelector(".advert-card");
-  if(box){const img=box.querySelector(".ad-image"),copy=box.querySelector(".ad-copy");if(img){img.innerHTML=sidebar.media_type==="video"?'<video controls muted playsinline preload="metadata" src="'+esc(sidebar.asset_url)+'"></video>':'<a href="'+esc(sidebar.click_url)+'" target="_blank" rel="sponsored noopener"><img src="'+esc(sidebar.asset_url)+'" alt="'+esc(sidebar.name)+'"></a>';}if(copy)copy.innerHTML='<span>ADVERTISEMENT · SPONSORED</span><h2>'+esc(sidebar.name)+'</h2><p>Presented by '+esc(sidebar.advertiser)+'.</p><a href="'+esc(sidebar.click_url)+'" target="_blank" rel="sponsored noopener">Visit advertiser →</a>';}
-  const banner=data.find(a=>a.placement==="banner");if(banner){const section=document.createElement("section");section.className="live-ad-banner";section.innerHTML='<span>ADVERTISEMENT · SPONSORED</span><a href="'+esc(banner.click_url)+'" target="_blank" rel="sponsored noopener">'+(banner.media_type==="video"?'<video controls muted playsinline src="'+esc(banner.asset_url)+'"></video>':'<img src="'+esc(banner.asset_url)+'" alt="'+esc(banner.name)+'">')+'</a>';const main=document.querySelector("main.shell");if(main)main.append(section);}
+  const media=a=>a.media_type==="video"?'<video controls muted playsinline preload="metadata" src="'+esc(a.asset_url)+'"></video>':'<img src="'+esc(a.asset_url)+'" alt="'+esc(a.name)+'">';
+  const linked=a=>'<a href="'+esc(a.click_url||"#")+'" target="_blank" rel="sponsored noopener">'+media(a)+'</a>';
+  const side=data.find(a=>["sidebar","homepage_rail"].includes(a.placement));
+  const box=document.querySelector(".advert-card");
+  if(side&&box){const img=box.querySelector(".ad-image"),copy=box.querySelector(".ad-copy");if(img)img.innerHTML=side.media_type==="video"?media(side):linked(side);if(copy)copy.innerHTML='<span>ADVERTISEMENT · SPONSORED</span><h2>'+esc(side.name)+'</h2><p>Presented by '+esc(side.advertiser)+'.</p><a href="'+esc(side.click_url||"#")+'" target="_blank" rel="sponsored noopener">Visit advertiser →</a>';}
+  const banner=data.find(a=>["banner","top_leaderboard"].includes(a.placement));
+  if(banner){let section=document.querySelector(".live-ad-banner");if(!section){section=document.createElement("section");section.className="live-ad-banner";const main=document.querySelector("main.shell");if(main)main.insertBefore(section,main.querySelector(".latest-section"));}section.innerHTML='<span>ADVERTISEMENT · SPONSORED</span>'+linked(banner);}
+  const railVideo=data.find(a=>a.placement==="homepage_rail"&&a.media_type==="video");
+  if(railVideo&&side?.id!==railVideo.id){const rail=document.querySelector(".right-rail");if(rail){const video=document.createElement("section");video.className="live-ad-video";video.innerHTML='<span>ADVERTISEMENT · SPONSORED</span>'+linked(railVideo);rail.append(video);}}
  }
  document.addEventListener("DOMContentLoaded",()=>{home();desk();story();adverts();});
 })();
