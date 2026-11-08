@@ -5,7 +5,8 @@ create extension if not exists pgcrypto;
 create table if not exists public.profiles (
  id uuid primary key references auth.users(id) on delete cascade,
  display_name text not null default '',
- role text not null default 'reader' check (role in ('reader','reporter','editor','moderator','admin')),
+ email text,
+ role text not null default 'reader' check (role in ('reader','reporter','researcher','editor','moderator','opportunities_editor','video_producer','admin')),
  created_at timestamptz not null default now()
 );
 create table if not exists public.articles (
@@ -135,3 +136,19 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 -- Create staff users through Supabase Auth invitations, then assign a role manually:
 -- update public.profiles set role='admin', display_name='Newsroom Administrator' where id='<AUTH_USER_UUID>';
 -- For each new Auth user, create their profile row explicitly as an admin.
+
+
+-- Keep staff directory email addresses in sync with Supabase Auth.
+alter table public.profiles add column if not exists email text;
+update public.profiles p set email=u.email from auth.users u where u.id=p.id and (p.email is null or p.email='');
+create or replace function public.sync_profile_auth_fields()
+returns trigger language plpgsql security definer set search_path=public,auth
+as $$ begin
+ update public.profiles set email=new.email,
+ display_name=coalesce(nullif(new.raw_user_meta_data->>'display_name',''),display_name)
+ where id=new.id;
+ return new;
+end; $$;
+drop trigger if exists sync_profile_auth_fields on auth.users;
+create trigger sync_profile_auth_fields after update of email,raw_user_meta_data on auth.users
+for each row execute function public.sync_profile_auth_fields();
