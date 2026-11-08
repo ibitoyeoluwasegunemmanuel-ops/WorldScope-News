@@ -11,7 +11,7 @@ function applyRoleNavigation(role){const access={articles:["admin","editor","rep
 function tab(name){document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));document.querySelectorAll("[id^=tab-]").forEach(s=>s.classList.toggle("hidden",s.id!=="tab-"+name))}
 document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
 $("newArticleBtn").onclick=()=>{resetForm();tab("new")};
-$("togglePassword").addEventListener("click",()=>{const p=$("password"),show=p.type==="password";p.type=show?"text":"password";$("togglePassword").textContent=show?"Hide":"Show";$("togglePassword").setAttribute("aria-label",show?"Hide password":"Show password")});
+
 const savedEmail=localStorage.getItem("worldscope_staff_email");if(savedEmail){$("email").value=savedEmail;$("rememberMe").checked=true}
 function resetForm(){$("articleForm").reset();$("articleId").value="";$("editorHeading").textContent="Create a report";if($("isFeatured"))$("isFeatured").checked=false}
 function escapeHtml(s){return String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]))}
