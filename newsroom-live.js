@@ -33,5 +33,14 @@
   document.title=data.title+" | WorldScope News";
   root.innerHTML='<article class="story-article"><span class="eyebrow">'+esc(data.category)+'</span><h1>'+esc(data.title)+'</h1><p class="story-deck">'+esc(data.summary)+'</p><p class="story-byline">By '+esc(data.byline_name||"WorldScope News")+' · '+fmt(data.published_at)+'</p>'+(data.featured_image_url?'<img class="story-image" src="'+esc(data.featured_image_url)+'" alt="'+esc(data.title)+'">':"")+'<div class="story-body">'+String(data.body||"").split(/\n\n+/).map(p=>"<p>"+esc(p).replace(/\n/g,"<br>")+"</p>").join("")+'</div><section class="story-sources"><h2>Sources & further reading</h2>'+(sources||[]).map(s=>'<p><a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.title)+'</a></p>').join("")+'</section></article>';
  }
- document.addEventListener("DOMContentLoaded",()=>{home();desk();story();});
+
+ async function adverts(){
+  const today=new Date().toISOString().slice(0,10);
+  const {data}=await db.from("ad_campaigns").select("name,advertiser,placement,click_url,asset_url,media_type").eq("status","active").or("starts_at.is.null,starts_at.lte."+today).or("ends_at.is.null,ends_at.gte."+today).order("created_at",{ascending:false}).limit(8);
+  if(!data?.length)return;
+  const sidebar=data.find(a=>a.placement==="sidebar")||data[0],box=document.querySelector(".advert-card");
+  if(box){const img=box.querySelector(".ad-image"),copy=box.querySelector(".ad-copy");if(img){img.innerHTML=sidebar.media_type==="video"?'<video controls muted playsinline preload="metadata" src="'+esc(sidebar.asset_url)+'"></video>':'<a href="'+esc(sidebar.click_url)+'" target="_blank" rel="sponsored noopener"><img src="'+esc(sidebar.asset_url)+'" alt="'+esc(sidebar.name)+'"></a>';}if(copy)copy.innerHTML='<span>ADVERTISEMENT · SPONSORED</span><h2>'+esc(sidebar.name)+'</h2><p>Presented by '+esc(sidebar.advertiser)+'.</p><a href="'+esc(sidebar.click_url)+'" target="_blank" rel="sponsored noopener">Visit advertiser →</a>';}
+  const banner=data.find(a=>a.placement==="banner");if(banner){const section=document.createElement("section");section.className="live-ad-banner";section.innerHTML='<span>ADVERTISEMENT · SPONSORED</span><a href="'+esc(banner.click_url)+'" target="_blank" rel="sponsored noopener">'+(banner.media_type==="video"?'<video controls muted playsinline src="'+esc(banner.asset_url)+'"></video>':'<img src="'+esc(banner.asset_url)+'" alt="'+esc(banner.name)+'">')+'</a>';const main=document.querySelector("main.shell");if(main)main.append(section);}
+ }
+ document.addEventListener("DOMContentLoaded",()=>{home();desk();story();adverts();});
 })();
