@@ -1,10 +1,10 @@
 alter table public.articles add column if not exists is_featured boolean not null default false;
 create or replace function public.enforce_article_editorial_workflow()
-returns trigger language plpgsql security definer set search_path=public,private
+returns trigger language plpgsql security definer set search_path=public
 as $$
 declare staff_role text;
 begin
- staff_role := private.current_staff_role();
+ staff_role := public.current_staff_role();
  if staff_role is null then raise exception 'An authorised newsroom account is required'; end if;
  if staff_role not in ('admin','editor') then
   if tg_op='INSERT' then
