@@ -116,9 +116,21 @@ create policy "moderators review comments" on public.comments for update to auth
 create policy "public read current opportunities" on public.opportunities for select to anon,authenticated using (status='published' and (deadline is null or deadline>=current_date));
 create policy "staff manage opportunities" on public.opportunities for all to authenticated using (public.has_staff_role(array['reporter','editor','admin'])) with check (public.has_staff_role(array['reporter','editor','admin']));
 create policy "public newsletter signup" on public.newsletter_subscribers for insert to anon,authenticated with check (confirmed_at is null);
-create policy "admins manage newsletter" on public.newsletter_subscribers for select,update,delete to authenticated using (public.has_staff_role(array['admin','editor'])) with check (public.has_staff_role(array['admin','editor']));
+create policy "staff read newsletter subscribers" on public.newsletter_subscribers for select to authenticated using (public.has_staff_role(array['admin','editor']));
+create policy "staff update newsletter subscribers" on public.newsletter_subscribers for update to authenticated using (public.has_staff_role(array['admin','editor'])) with check (public.has_staff_role(array['admin','editor']));
+create policy "admins delete newsletter subscribers" on public.newsletter_subscribers for delete to authenticated using (public.has_staff_role(array['admin']));
 create policy "public submit ad enquiry" on public.advertising_enquiries for insert to anon,authenticated with check (status='new');
 create policy "staff manage ad enquiries" on public.advertising_enquiries for select,update to authenticated using (public.has_staff_role(array['admin','editor'])) with check (public.has_staff_role(array['admin','editor']));
+
+-- Automatically create a least-privilege reader profile for each new Auth user.
+create or replace function public.handle_new_auth_user()
+returns trigger language plpgsql security definer set search_path=public
+as $ begin
+ insert into public.profiles(id,display_name,role) values(new.id,coalesce(new.raw_user_meta_data->>'display_name',''),'reader') on conflict(id) do nothing;
+ return new;
+end; $;
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_auth_user();
 
 -- Create staff users through Supabase Auth invitations, then assign a role manually:
 -- update public.profiles set role='admin', display_name='Newsroom Administrator' where id='<AUTH_USER_UUID>';
