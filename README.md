@@ -23,3 +23,12 @@ The public website intentionally does not identify the founder or publisher by p
 
 ## Next phase
 Build secure editor roles, article drafts/review/approval, source records, corrections history, image/video storage, SEO, analytics, RSS, reader accounts, moderated comments and verified global opportunities.
+
+
+## Editorial CMS foundation
+- `admin.html` is a private, no-index staff sign-in and editorial dashboard.
+- `admin.js` uses Supabase Auth and database records; it does not use fake local demo data.
+- `supabase/schema.sql` creates CMS, source-verification, correction, comment, opportunity, newsletter and advertising tables with Row Level Security policies.
+- Copy `supabase-config.example.js` to `supabase-config.js` and add the Supabase project URL and anon/publishable key. Never put a service-role key in browser code.
+- Apply the SQL migration in Supabase, invite staff accounts, and assign roles in `profiles`. New accounts default to the reader role and cannot access the newsroom dashboard.
+- The CMS is intentionally not connected to production data until the Supabase project credentials and migration are configured.
