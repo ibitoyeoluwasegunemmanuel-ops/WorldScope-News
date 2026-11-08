@@ -20,9 +20,11 @@
   const p=new URLSearchParams(location.search),section=(p.get("section")||"latest").toLowerCase(),q=(p.get("search")||"").trim();
   const page=Math.max(1,parseInt(p.get("page")||"1",10)||1),pageSize=20;
   const heading=document.querySelector("#deskTitle");if(heading)heading.textContent=q?"Search: "+q:section==="latest"?"Latest reports":section[0].toUpperCase()+section.slice(1);
+  const intro=document.querySelector("#deskIntro");if(intro)intro.textContent=q?"Search published WorldScope reports by headline, summary and article text.":section==="latest"?"The latest published reports from Nigeria, Africa and around the world.":"Published reporting from the "+section+" desk. Drafts remain private until editorial approval.";
   let query=db.from("articles").select("id,title,slug,category,summary,featured_image_url,published_at,byline_name",{count:"exact"}).eq("status","published").order("published_at",{ascending:false});
-  if(section!=="latest"&&!q)query=query.ilike("category",section);
-  if(q)query=query.or("title.ilike.%"+q+"%,summary.ilike.%"+q+"%,body.ilike.%"+q+"%");
+  const categoryMap={world:["World"],africa:["Africa"],nigeria:["Nigeria"],business:["Business"],technology:["Technology"],health:["Health"],environment:["Environment"],entertainment:["Entertainment"],opinion:["Opinion"],sports:["Sports"]};
+  if(section!=="latest"&&!q){const categories=categoryMap[section]||[section];query=query.in("category",categories);}
+  if(q){const safe=q.replace(/[,%()]/g," ").replace(/\\s+/g," ").trim().slice(0,120);if(safe)query=query.or("title.ilike.%"+safe+"%,summary.ilike.%"+safe+"%,body.ilike.%"+safe+"%");}
   if(p.get("year")){const y=Number(p.get("year"));if(Number.isInteger(y)&&y>=1900&&y<=2100){query=query.gte("published_at",y+"-01-01T00:00:00.000Z").lt("published_at",(y+1)+"-01-01T00:00:00.000Z");}}
   const from=(page-1)*pageSize;query=query.range(from,from+pageSize-1);
   const {data,error,count}=await query;
