@@ -9,3 +9,6 @@
 
 /* WhatsApp contact shortcut */
 .whatsapp-float{position:fixed;right:22px;bottom:22px;z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 17px;border-radius:999px;background:#128c4b;color:#fff!important;box-shadow:0 8px 28px rgba(0,0,0,.22);font:700 12px var(--sans);text-decoration:none!important;transition:transform .18s ease,box-shadow .18s ease}.whatsapp-float:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.27)}.whatsapp-float svg{width:23px;height:23px;flex:none}@media(max-width:600px){.whatsapp-float{right:14px;bottom:14px;padding:12px;border-radius:50%;width:52px;height:52px;justify-content:center}.whatsapp-float span{display:none}.search{display:flex!important;max-width:100%;order:3;flex-basis:100%;margin:8px 0 10px}.mast-inner{flex-wrap:wrap}.search input{min-width:0}.mobile-menu{display:block}}
+
+/* WorldScope TV responsive media */
+.video-card iframe,.video-card video{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:6px;background:#081321;margin-bottom:14px}.video-card video{height:auto}.video-card details{margin-top:12px;font-size:12px}.video-card summary{cursor:pointer;font-weight:700;color:var(--red)}.video-card details p{white-space:pre-wrap;color:var(--ink);max-height:360px;overflow:auto}
