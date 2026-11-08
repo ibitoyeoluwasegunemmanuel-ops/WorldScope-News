@@ -155,7 +155,7 @@ create policy "staff manage ad enquiries" on public.advertising_enquiries for se
 -- Keep editorial queue timestamps accurate after every article edit.
 create or replace function public.set_article_updated_at()
 returns trigger language plpgsql
-as $
+as $$
 begin
  new.updated_at = now();
  return new;
