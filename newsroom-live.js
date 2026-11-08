@@ -23,6 +23,7 @@
   let query=db.from("articles").select("id,title,slug,category,summary,featured_image_url,published_at,byline_name",{count:"exact"}).eq("status","published").order("published_at",{ascending:false});
   if(section!=="latest"&&!q)query=query.ilike("category",section);
   if(q)query=query.or("title.ilike.%"+q+"%,summary.ilike.%"+q+"%,body.ilike.%"+q+"%");
+  if(p.get("year")){const y=Number(p.get("year"));if(Number.isInteger(y)&&y>=1900&&y<=2100){query=query.gte("published_at",y+"-01-01T00:00:00.000Z").lt("published_at",(y+1)+"-01-01T00:00:00.000Z");}}
   const from=(page-1)*pageSize;query=query.range(from,from+pageSize-1);
   const {data,error,count}=await query;
   if(error){grid.textContent="The newsroom feed is temporarily unavailable.";return;}
@@ -36,9 +37,7 @@
   yearList.forEach(y=>{const o=document.createElement("option");o.value=String(y);o.textContent=String(y);yearSelect.append(o)});
   if(p.get("year"))yearSelect.value=p.get("year");
   yearSelect.onchange=()=>{const next=new URLSearchParams(location.search);next.delete("page");if(yearSelect.value)next.set("year",yearSelect.value);else next.delete("year");location.search=next.toString()};
-  let shown=articles;
-  if(p.get("year"))shown=shown.filter(a=>String(new Date(a.published_at).getFullYear())===p.get("year"));
-  const cards=document.createElement("div");cards.className="live-story-grid";cards.innerHTML=shown.length?shown.map(card).join(""):'<div class="desk-empty"><div class="empty-mark">W</div><h2>No published reports in this view.</h2><p>Try another section or year. Drafts remain private until editorial approval.</p></div>';
+  const cards=document.createElement("div");cards.className="live-story-grid";cards.innerHTML=articles.length?articles.map(card).join(""):'<div class="desk-empty"><div class="empty-mark">W</div><h2>No published reports in this view.</h2><p>Try another section or year. Drafts remain private until editorial approval.</p></div>';
   const pager=document.createElement("nav");pager.className="archive-pagination";pager.setAttribute("aria-label","News archive pages");
   pager.innerHTML='<span>Page '+page+' of '+totalPages+'</span><div>'+(page>1?'<a href="'+esc(pageUrl(page-1))+'">← Newer</a>':'')+(page<totalPages?'<a href="'+esc(pageUrl(page+1))+'">Older →</a>':'')+'</div>';
   function pageUrl(n){const next=new URLSearchParams(location.search);next.set("page",String(n));return "desk.html?"+next.toString()}
