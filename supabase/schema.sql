@@ -104,8 +104,37 @@ alter table public.advertising_enquiries enable row level security;
 create policy "staff read own profile" on public.profiles for select to authenticated using (id=auth.uid() or public.has_staff_role(array['admin','editor']));
 create policy "admins manage profiles" on public.profiles for all to authenticated using (public.has_staff_role(array['admin'])) with check (public.has_staff_role(array['admin']));
 create policy "public read published articles" on public.articles for select to anon,authenticated using (status='published' or public.has_staff_role(array['reporter','editor','moderator','admin']));
-create policy "reporters create articles" on public.articles for insert to authenticated with check (author_id=auth.uid() and public.has_staff_role(array['reporter','editor','admin']));
-create policy "authors edit own drafts staff edit all" on public.articles for update to authenticated using ((author_id=auth.uid() and status in ('draft','rejected')) or public.has_staff_role(array['editor','admin'])) with check (author_id=auth.uid() or public.has_staff_role(array['editor','admin']));
+-- Reporters may submit only their own drafts or items for editorial review.
+-- Editors/admins have a separate policy for editorial workflow transitions.
+create policy "reporters create reviewable articles" on public.articles
+ for insert to authenticated
+ with check (
+  author_id=auth.uid()
+  and public.has_staff_role(array['reporter'])
+  and status in ('draft','in_review')
+ );
+create policy "editors create articles" on public.articles
+ for insert to authenticated
+ with check (
+  author_id=auth.uid()
+  and public.has_staff_role(array['editor','admin'])
+ );
+create policy "authors edit own drafts" on public.articles
+ for update to authenticated
+ using (
+  author_id=auth.uid()
+  and public.has_staff_role(array['reporter'])
+  and status in ('draft','rejected')
+ )
+ with check (
+  author_id=auth.uid()
+  and public.has_staff_role(array['reporter'])
+  and status in ('draft','in_review')
+ );
+create policy "editors manage article workflow" on public.articles
+ for update to authenticated
+ using (public.has_staff_role(array['editor','admin']))
+ with check (public.has_staff_role(array['editor','admin']));
 create policy "editors delete articles" on public.articles for delete to authenticated using (public.has_staff_role(array['admin']));
 create policy "staff manage source records" on public.article_sources for all to authenticated using (public.has_staff_role(array['reporter','editor','admin'])) with check (public.has_staff_role(array['reporter','editor','admin']));
 create policy "staff read corrections" on public.article_corrections for select to authenticated using (public.has_staff_role(array['editor','moderator','admin']));
@@ -123,6 +152,20 @@ create policy "public submit ad enquiry" on public.advertising_enquiries for ins
 create policy "staff manage ad enquiries" on public.advertising_enquiries for select,update to authenticated using (public.has_staff_role(array['admin','editor'])) with check (public.has_staff_role(array['admin','editor']));
 
 -- Automatically create a least-privilege reader profile for each new Auth user.
+-- Keep editorial queue timestamps accurate after every article edit.
+create or replace function public.set_article_updated_at()
+returns trigger language plpgsql
+as $
+begin
+ new.updated_at = now();
+ return new;
+end;
+$;
+drop trigger if exists articles_set_updated_at on public.articles;
+create trigger articles_set_updated_at
+ before update on public.articles
+ for each row execute procedure public.set_article_updated_at();
+
 create or replace function public.handle_new_auth_user()
 returns trigger language plpgsql security definer set search_path=public
 as $ begin
