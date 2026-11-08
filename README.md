@@ -2,21 +2,24 @@
 
 **The World. In Focus.**
 
-Founder, Publisher & Main News Anchor: **Ibitoye Oluwasegun Emmanuel**.
+WorldScope News is an independent digital publication covering Nigeria, Africa and the world.
 
-This repository contains the first responsive WorldScope News website release. It is a static editorial front end; a secure CMS and publishing workflow are planned as the next phase.
+This repository contains the responsive public website. The editorial CMS, authenticated newsroom workflow and opportunity database are being developed in stages.
 
 ## Run locally
 Open `index.html` in a browser, or run `npx serve .`.
 
 ## Deploy
-Import this repository into Vercel. Choose **Other**, leave the build command blank, and use `.` as the output directory.
+The repository is connected to Vercel. Pull requests receive preview deployments; the production branch is configured separately.
 
 ## Editorial integrity
-No fabricated stories are included. Publish only verified and approved reporting. Attribute sources, distinguish allegations from established facts, and correct errors transparently.
+No fabricated stories or opportunity listings are included. Publish only verified and approved reporting. Attribute sources, distinguish allegations from established facts, seek responses where appropriate, and correct errors transparently.
 
 ## Current limitations
-The newsletter form is a visual preview and does not store subscriptions. The site does not yet include an authenticated CMS, article database, or video hosting integration.
+The newsletter link currently opens an email enquiry; no subscription database is connected. The site does not yet include an authenticated CMS, article database, comments, opportunity listings database, analytics dashboard or video hosting integration.
+
+## Privacy
+The public website intentionally does not identify the founder or publisher by personal name. Do not add private identity details to public site content, repository documentation or public assets without explicit approval.
 
 ## Next phase
-Add secure editor roles, article drafts/review/approval, source records, corrections history, image/video storage, SEO, analytics, RSS, and social publishing workflows.
+Build secure editor roles, article drafts/review/approval, source records, corrections history, image/video storage, SEO, analytics, RSS, reader accounts, moderated comments and verified global opportunities.
