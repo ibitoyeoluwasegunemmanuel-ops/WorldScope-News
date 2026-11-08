@@ -160,7 +160,7 @@ begin
  new.updated_at = now();
  return new;
 end;
-$;
+$$;
 drop trigger if exists articles_set_updated_at on public.articles;
 create trigger articles_set_updated_at
  before update on public.articles
