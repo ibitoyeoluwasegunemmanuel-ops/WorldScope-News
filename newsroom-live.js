@@ -24,7 +24,7 @@
   let query=db.from("articles").select("id,title,slug,category,summary,featured_image_url,published_at,byline_name",{count:"exact"}).eq("status","published").order("published_at",{ascending:false});
   const categoryMap={world:["World"],africa:["Africa"],nigeria:["Nigeria"],business:["Business"],technology:["Technology"],health:["Health"],environment:["Environment"],entertainment:["Entertainment"],opinion:["Opinion"],sports:["Sports"]};
   if(section!=="latest"&&!q){const categories=categoryMap[section]||[section];query=query.in("category",categories);}
-  if(q){const safe=q.replace(/[,%()]/g," ").replace(/\\s+/g," ").trim().slice(0,120);if(safe)query=query.or("title.ilike.%"+safe+"%,summary.ilike.%"+safe+"%,body.ilike.%"+safe+"%");}
+  if(q){const safe=q.replace(/[,%()]/g," ").replace(/\s+/g," ").trim().slice(0,120);if(safe)query=query.or("title.ilike.%"+safe+"%,summary.ilike.%"+safe+"%,body.ilike.%"+safe+"%");}
   if(p.get("year")){const y=Number(p.get("year"));if(Number.isInteger(y)&&y>=1900&&y<=2100){query=query.gte("published_at",y+"-01-01T00:00:00.000Z").lt("published_at",(y+1)+"-01-01T00:00:00.000Z");}}
   const from=(page-1)*pageSize;query=query.range(from,from+pageSize-1);
   const {data,error,count}=await query;
